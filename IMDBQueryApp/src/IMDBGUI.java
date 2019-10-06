@@ -24,6 +24,7 @@ public class IMDBGUI {
 
 	JFrame frame;
 	JPanel panel;
+	boolean outputToTextFile = false;
 
 	public IMDBGUI(){
 		frame = new JFrame("IMDB Query App");
@@ -39,8 +40,12 @@ public class IMDBGUI {
 		 });   
 		panel = new JPanel();
 		panel.setLayout(new FlowLayout());
-		JButton button = new JButton("Press");
+		JButton button = new JButton("Submit Query");
 		JCheckBox toggleTextOutput = new JCheckBox("Output to Text File");
+		button.setActionCommand("submit");
+		button.addActionListener(new ButtonClickListener());
+		toggleTextOutput.setActionCommand("toggleOutputFile");
+		toggleTextOutput.addActionListener(new ButtonClickListener());
 		
 		frame.add(headerLabel);
 		frame.add(toggleTextOutput);
@@ -167,4 +172,18 @@ public class IMDBGUI {
 		}
 	}
 
+
+	private class ButtonClickListener implements ActionListener{
+		public void actionPerformed(ActionEvent e) {
+		   String command = e.getActionCommand();  
+		   
+		   switch(command){
+			   case "toggleOutputFile":
+			   outputToTextFile = !outputToTextFile;
+			   break;
+		   }
+		}		
+	 }
 }
+
+
