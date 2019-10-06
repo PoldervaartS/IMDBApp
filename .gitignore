@@ -2,5 +2,5 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/IMDBQueryApp/bin/Main.class
+/IMDBQueryApp/bin/
 /IMDBQueryApp/src/.classpath
