@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,8 @@ public class IMDBGUI {
 		frame = new JFrame("IMDB Query App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 500);
-		frame.setLayout(new GridLayout(3, 1));
+		JPanel queryPanel = new JPanel();
+		frame.setLayout(new BoxLayout(queryPanel, BoxLayout.Y_AXIS));
 		JLabel headerLabel = new JLabel("Create your Movie Query",JLabel.CENTER );
 
 		frame.addWindowListener(new WindowAdapter() {
@@ -46,11 +48,18 @@ public class IMDBGUI {
 		button.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
 		toggleTextOutput.addActionListener(new ButtonClickListener());
+
+		String[] optionsarray = {"Movie Title", "Release Year", "Actor", "Producer", "Director",
+			"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
+
+		JComboBox<String> filterOptions = new JComboBox<String>(optionsarray);
 		
-		frame.add(headerLabel);
-		frame.add(toggleTextOutput);
+		queryPanel.add(headerLabel);
+		panel.add(toggleTextOutput);
+		panel.add(button);
+		queryPanel.add(filterOptions);
+		frame.add(queryPanel);
 		frame.add(panel);
-		frame.add(button);
 
 		show();
 
