@@ -3,6 +3,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import java.awt.event.*;
 
 public class IMDBGUI {
 
+	final String[] optionsarray = { "None", "Movie Title", "Release Year", "Actor", "Producer", "Director",
+			"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
 	static Connection conn = null;
 	static Statement stmt = null;
 
@@ -23,17 +27,17 @@ public class IMDBGUI {
 	static final String DB_URL = "jdbc:postgresql://db-315.cse.tamu.edu/shanepoldervaart_db";
 
 	JFrame frame;
-	JPanel panel;
+	JPanel queryPanel;
 	JCheckBox toggleTextOutput;
-	JComboBox<String> filterOptions1;
-	JComboBox<String> filterOptions2;
+	JComboBox<String> filterOptions1, filterOptions2;
+	JTextField filterParameter1, filterParmeter2;
 	boolean outputToTextFile = false;
 
 	public IMDBGUI() {
 		frame = new JFrame("IMDB Query App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 500);
-		frame.setLayout(new GridLayout(3, 1));
+		frame.setLayout(new GridLayout(4, 1));
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
 
 		frame.addWindowListener(new WindowAdapter() {
@@ -42,28 +46,29 @@ public class IMDBGUI {
 			}
 
 		});
-		panel = new JPanel();
-		panel.setLayout(new FlowLayout());
+
+		// Query Panel
+		queryPanel = new JPanel();
+		queryPanel.setLayout(new FlowLayout());
 		JButton submitButton = new JButton("Submit Query");
 		toggleTextOutput = new JCheckBox("Output to Text File");
 		submitButton.setActionCommand("submit");
 		submitButton.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
 		toggleTextOutput.addActionListener(new ButtonClickListener());
-
-		String[] optionsarray = { "None", "Movie Title", "Release Year", "Actor", "Producer", "Director",
-				"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
-
 		filterOptions1 = new JComboBox<String>(optionsarray);
-		filterOptions1.addActionListener(new SelectionListener());
 		filterOptions2 = new JComboBox<String>(optionsarray);
-		filterOptions2.addActionListener(new SelectionListener());
+		filterParameter1 = new JTextField(20);
+		filterParmeter2 = new JTextField(20);
+		queryPanel.add(filterOptions1);
+		queryPanel.add(filterParameter1);
+		queryPanel.add(filterOptions2);
+		queryPanel.add(filterParmeter2);
+		queryPanel.add(toggleTextOutput);
+		queryPanel.add(submitButton);
 
 		frame.add(headerLabel);
-		panel.add(filterOptions1);
-		panel.add(toggleTextOutput);
-		panel.add(submitButton);
-		frame.add(panel);
+		frame.add(queryPanel);
 
 		show();
 
@@ -196,6 +201,38 @@ public class IMDBGUI {
 		// make a view in sql
 		// if that is longer than 20? rows then output as .txt
 		// else just system out em?
+		System.out.printf("Search 1 Type: %s\tSearch Paramater 1: %s\nSearch 2 Type: %s\tSearch Parameter2: %s\n",
+				(String) filterOptions1.getSelectedItem(), filterParameter1.getText(),
+				(String) filterOptions2.getSelectedItem(), filterParmeter2.getText());
+
+		// execute
+		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title FROM team.movies WHERE ";
+		if ((String) filterOptions1.getSelectedItem() == "Actor"
+				&& (String) filterOptions2.getSelectedItem() == "Actor") {
+			sql = String.format(sql + "FROM INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+					+ "INNER JOIN team.people ON team.characters.personid = team.people.id WHERE team.people.name = 'William Heise';");
+		}
+
+		try {
+			stmt = conn.createStatement();
+			// Creates the view with the info
+			PreparedStatement pst = conn.prepareStatement(sql);
+			ResultSet rs = pst.executeQuery();
+
+			// TODO check if view is larger than 10 entries, if so display that it needs to
+			// be output to a text file
+
+			// TODO actually list everything
+
+		} catch (SQLException se) {
+			// Handle errors for JDBC
+			se.printStackTrace();
+		}
+		// catch (IOException e) {
+		// // File Not Found Catch
+		// e.printStackTrace();
+		// }
+
 	}
 
 	private class ButtonClickListener implements ActionListener {
@@ -211,19 +248,5 @@ public class IMDBGUI {
 				break;
 			}
 		}
-	}
-
-	private class SelectionListener implements ActionListener {
-
-		// TODO put in a string for what is being querried.
-		public void actionPerformed(ActionEvent e) {
-			if (e.getSource() == filterOptions1) {
-
-			} else {
-
-			}
-
-		}
-
 	}
 }
