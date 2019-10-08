@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,40 +24,45 @@ public class IMDBGUI {
 
 	JFrame frame;
 	JPanel panel;
+	JCheckBox toggleTextOutput;
+	JComboBox<String> filterOptions1;
+	JComboBox<String> filterOptions2;
 	boolean outputToTextFile = false;
 
-	public IMDBGUI(){
+	public IMDBGUI() {
 		frame = new JFrame("IMDB Query App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 500);
-		JPanel queryPanel = new JPanel();
-		frame.setLayout(new BoxLayout(queryPanel, BoxLayout.Y_AXIS));
-		JLabel headerLabel = new JLabel("Create your Movie Query",JLabel.CENTER );
+		frame.setLayout(new GridLayout(3, 1));
+		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
 
 		frame.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent windowEvent){
-			   System.exit(0);
-			}        
-		 });   
+			public void windowClosing(WindowEvent windowEvent) {
+				close();
+			}
+
+		});
 		panel = new JPanel();
 		panel.setLayout(new FlowLayout());
-		JButton button = new JButton("Submit Query");
-		JCheckBox toggleTextOutput = new JCheckBox("Output to Text File");
-		button.setActionCommand("submit");
-		button.addActionListener(new ButtonClickListener());
+		JButton submitButton = new JButton("Submit Query");
+		toggleTextOutput = new JCheckBox("Output to Text File");
+		submitButton.setActionCommand("submit");
+		submitButton.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
 		toggleTextOutput.addActionListener(new ButtonClickListener());
 
-		String[] optionsarray = {"Movie Title", "Release Year", "Actor", "Producer", "Director",
-			"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
+		String[] optionsarray = { "None", "Movie Title", "Release Year", "Actor", "Producer", "Director",
+				"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
 
-		JComboBox<String> filterOptions = new JComboBox<String>(optionsarray);
-		
-		queryPanel.add(headerLabel);
+		filterOptions1 = new JComboBox<String>(optionsarray);
+		filterOptions1.addActionListener(new SelectionListener());
+		filterOptions2 = new JComboBox<String>(optionsarray);
+		filterOptions2.addActionListener(new SelectionListener());
+
+		frame.add(headerLabel);
+		panel.add(filterOptions1);
 		panel.add(toggleTextOutput);
-		panel.add(button);
-		queryPanel.add(filterOptions);
-		frame.add(queryPanel);
+		panel.add(submitButton);
 		frame.add(panel);
 
 		show();
@@ -110,6 +114,10 @@ public class IMDBGUI {
 		frame.setVisible(true);
 	}
 
+	private void close() {
+		System.exit(closeDBConnection());
+	}
+
 	int closeDBConnection() {
 
 		// finally block used to close resources
@@ -147,7 +155,8 @@ public class IMDBGUI {
 				}
 
 				// sql =String.format( "INSERT INTO team.ratings (movieid,avgrating,numvotes) "
-//	            + "VALUES (\'%s\',%s,%s);",dataArray.get(0), dataArray.get(1),Integer.parseInt(dataArray.get(2)));
+				// + "VALUES (\'%s\',%s,%s);",dataArray.get(0),
+				// dataArray.get(1),Integer.parseInt(dataArray.get(2)));
 
 				if (dataArray.get(3).compareTo("\\N") != 0 && dataArray.get(2).compareTo("\\N") != 0) {
 					sql = String.format(
@@ -181,18 +190,40 @@ public class IMDBGUI {
 		}
 	}
 
+	private void submitQuery() {
+		// TODO Make submit query work
+		// figure out what the 2 options are
+		// make a view in sql
+		// if that is longer than 20? rows then output as .txt
+		// else just system out em?
+	}
 
-	private class ButtonClickListener implements ActionListener{
+	private class ButtonClickListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-		   String command = e.getActionCommand();  
-		   
-		   switch(command){
-			   case "toggleOutputFile":
-			   outputToTextFile = !outputToTextFile;
-			   break;
-		   }
-		}		
-	 }
+			String command = e.getActionCommand();
+
+			switch (command) {
+			case "toggleOutputFile":
+				outputToTextFile = !outputToTextFile;
+				break;
+			case "submit":
+				submitQuery();
+				break;
+			}
+		}
+	}
+
+	private class SelectionListener implements ActionListener {
+
+		// TODO put in a string for what is being querried.
+		public void actionPerformed(ActionEvent e) {
+			if (e.getSource() == filterOptions1) {
+
+			} else {
+
+			}
+
+		}
+
+	}
 }
-
-
