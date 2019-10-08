@@ -105,6 +105,8 @@ public class IMDBGUI {
 		queryPanel.setLayout(new FlowLayout());
 		JButton submitButton = new JButton("Submit Query");
 		toggleTextOutput = new JCheckBox("Output to Text File");
+		JButton button = new JButton("+");
+		button.setBounds(750, 100, 41, 30);
 		submitButton.setActionCommand("submit");
 		submitButton.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
@@ -119,6 +121,7 @@ public class IMDBGUI {
 		queryPanel.add(filterParameter1);
 		queryPanel.add(filterOptions2);
 		queryPanel.add(filterParmeter2);
+		queryPanel.add(button);
 		queryPanel.add(toggleTextOutput);
 		queryPanel.add(submitButton);
 		queryPanel.add(queryOutputTextField);
