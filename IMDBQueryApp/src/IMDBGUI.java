@@ -70,10 +70,8 @@ public class IMDBGUI {
 		frame.add(headerLabel);
 		frame.add(queryPanel);
 
-		show();
-
 		if (connectToDB() == 0) {
-
+			show();
 			closeDBConnection();
 		} else {
 			System.out.println("Failed to connect");
@@ -140,59 +138,6 @@ public class IMDBGUI {
 			// end try
 		System.out.println(" Goodbye!");
 		return 0;
-	}
-
-	void sqlThings() {
-
-		String sql;
-		StringTokenizer st;
-		try {
-			BufferedReader TSVFile = new BufferedReader(new FileReader("./name.basics.tsv"));
-
-			String dataRow = TSVFile.readLine(); // Read first line.
-
-			dataRow = TSVFile.readLine();
-			while (dataRow != null) {
-				st = new StringTokenizer(dataRow, "\t");
-				List<String> dataArray = new ArrayList<String>();
-				while (st.hasMoreElements()) {
-					dataArray.add(st.nextElement().toString());
-				}
-
-				// sql =String.format( "INSERT INTO team.ratings (movieid,avgrating,numvotes) "
-				// + "VALUES (\'%s\',%s,%s);",dataArray.get(0),
-				// dataArray.get(1),Integer.parseInt(dataArray.get(2)));
-
-				if (dataArray.get(3).compareTo("\\N") != 0 && dataArray.get(2).compareTo("\\N") != 0) {
-					sql = String.format(
-							"INSERT INTO team.people (id, name, birthdate, deathdate) "
-									+ "VALUES ( $$%s$$, $$%s$$, %d, %d);",
-							dataArray.get(0), dataArray.get(1), Integer.parseInt(dataArray.get(2)),
-							Integer.parseInt(dataArray.get(3)));
-				} else if (dataArray.get(3).compareTo("\\N") == 0 && dataArray.get(2).compareTo("\\N") != 0) {
-					sql = String.format(
-							"INSERT INTO team.people (id, name, birthdate) " + "VALUES ( $$%s$$, $$%s$$, %d);",
-							dataArray.get(0), dataArray.get(1), Integer.parseInt(dataArray.get(2)));
-				} else if (dataArray.get(3).compareTo("\\N") != 0 && dataArray.get(2).compareTo("\\N") == 0) {
-					sql = String.format(
-							"INSERT INTO team.people (id, name, deathdate) " + "VALUES ( $$%s$$, $$%s$$, %d);",
-							dataArray.get(0), dataArray.get(1), Integer.parseInt(dataArray.get(3)));
-				} else {
-					sql = String.format("INSERT INTO team.people (id, name) " + "VALUES ( $$%s$$, $$%s$$);",
-							dataArray.get(0), dataArray.get(1));
-				}
-				stmt.executeUpdate(sql);
-				dataRow = TSVFile.readLine(); // Read next line of data.
-			}
-			// Close the file once all data has been read.
-			TSVFile.close();
-		} catch (SQLException se) {
-			// Handle errors for JDBC
-			se.printStackTrace();
-		} catch (IOException e) {
-			// File Not Found Catch
-			e.printStackTrace();
-		}
 	}
 
 	private void submitQuery() {
