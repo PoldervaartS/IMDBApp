@@ -29,6 +29,7 @@ public class IMDBGUI {
 	JFrame frame;
 	JPanel queryPanel;
 	JCheckBox toggleTextOutput;
+	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
 	JTextField filterParameter1, filterParmeter2;
 	boolean outputToTextFile = false;
@@ -72,7 +73,6 @@ public class IMDBGUI {
 
 		if (connectToDB() == 0) {
 			show();
-			closeDBConnection();
 		} else {
 			System.out.println("Failed to connect");
 		}
@@ -144,6 +144,7 @@ public class IMDBGUI {
 		// TODO Make submit query work
 		// figure out what the 2 options are
 		// make a view in sql
+		// order it all so that it has the multiple includes? idk how
 		// if that is longer than 20? rows then output as .txt
 		// else just system out em?
 		System.out.printf("Search 1 Type: %s\tSearch Paramater 1: %s\nSearch 2 Type: %s\tSearch Parameter2: %s\n",
@@ -151,11 +152,12 @@ public class IMDBGUI {
 				(String) filterOptions2.getSelectedItem(), filterParmeter2.getText());
 
 		// execute
-		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title FROM team.movies WHERE ";
+		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title FROM team.movies ";
 		if ((String) filterOptions1.getSelectedItem() == "Actor"
 				&& (String) filterOptions2.getSelectedItem() == "Actor") {
-			sql = String.format(sql + "FROM INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
 					+ "INNER JOIN team.people ON team.characters.personid = team.people.id WHERE team.people.name = 'William Heise';");
+			System.out.println(sql);
 		}
 
 		try {
