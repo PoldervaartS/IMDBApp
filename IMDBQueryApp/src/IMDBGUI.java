@@ -31,8 +31,9 @@ public class IMDBGUI {
 	JCheckBox toggleTextOutput;
 	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
-	JTextField filterParameter1, filterParmeter2;
+	JTextField filterParameter1, filterParmeter2, queryOutputTextField;
 	boolean outputToTextFile = false;
+	Popup connectionPopup, userInfoPopup;
 
 	public IMDBGUI() {
 		frame = new JFrame("IMDB Query App");
@@ -48,6 +49,46 @@ public class IMDBGUI {
 
 		});
 
+		prepConnectionPopup();
+		prepQueryPanel();
+
+		frame.add(headerLabel);
+		frame.add(queryPanel);
+
+		if (connectToDB() == 0) {
+			connectionPopup.show();
+			show();
+		} else {
+			System.out.println("Failed to connect");
+		}
+	}
+
+	void prepConnectionPopup() {
+		JFrame f = new JFrame("pop");
+		JPanel p = new JPanel();
+		JButton okButton = new JButton("OK");
+		okButton.addActionListener(new ButtonClickListener());
+		okButton.setActionCommand("acknowledge connection");
+		JLabel connectionSuccses = new JLabel("Succeeded in connecting to the database");
+		p.add(connectionSuccses);
+		p.add(okButton);
+		f.setSize(200, 100);
+		PopupFactory pf = new PopupFactory();
+		connectionPopup = pf.getPopup(f, p, 180, 100);
+	}
+
+	void prepUserInfoPopup() {
+		JFrame f = new JFrame("pop");
+		JPanel p = new JPanel();
+		JLabel prompt = new JLabel("Input username and password to connect to the database");
+		JTextField username = new JTextField();
+		JPasswordField passwordField = new JPasswordField();
+
+		PopupFactory pf = new PopupFactory();
+
+	}
+
+	void prepQueryPanel() {
 		// Query Panel
 		queryPanel = new JPanel();
 		queryPanel.setLayout(new FlowLayout());
@@ -61,21 +102,17 @@ public class IMDBGUI {
 		filterOptions2 = new JComboBox<String>(optionsarray);
 		filterParameter1 = new JTextField(20);
 		filterParmeter2 = new JTextField(20);
+		queryOutputTextField = new JTextField();
+		queryOutputTextField.setBounds(100, 300, 700, 150);
+		queryOutputTextField.setEditable(false);
 		queryPanel.add(filterOptions1);
 		queryPanel.add(filterParameter1);
 		queryPanel.add(filterOptions2);
 		queryPanel.add(filterParmeter2);
 		queryPanel.add(toggleTextOutput);
 		queryPanel.add(submitButton);
+		queryPanel.add(queryOutputTextField);
 
-		frame.add(headerLabel);
-		frame.add(queryPanel);
-
-		if (connectToDB() == 0) {
-			show();
-		} else {
-			System.out.println("Failed to connect");
-		}
 	}
 
 	int connectToDB() {
@@ -145,35 +182,55 @@ public class IMDBGUI {
 		// figure out what the 2 options are
 		// make a view in sql
 		// order it all so that it has the multiple includes? idk how
-		// if that is longer than 20? rows then output as .txt
+		// if that is longer than 10 rows then output as .txt
 		// else just system out em?
 		System.out.printf("Search 1 Type: %s\tSearch Paramater 1: %s\nSearch 2 Type: %s\tSearch Parameter2: %s\n",
 				(String) filterOptions1.getSelectedItem(), filterParameter1.getText(),
 				(String) filterOptions2.getSelectedItem(), filterParmeter2.getText());
 
 		// execute
-		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title FROM team.movies ";
+		// EXAMPLE COMPLETED QUERY:
+
+		// SELECT * FROM movietest WHERE name = 'Harry Beaumont'
+		// AND title = (SELECT title FROM movietest WHERE name = 'Edna Flugrath');
+
+		// not sure if I want to do this modularly. Probably a good idea
+		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name FROM team.movies ";
+		String sql2 = "";
 		if ((String) filterOptions1.getSelectedItem() == "Actor"
 				&& (String) filterOptions2.getSelectedItem() == "Actor") {
 			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id WHERE team.people.name = 'William Heise';");
-			System.out.println(sql);
+					+ "INNER JOIN team.people ON team.characters.personid = team.people.id;");
+
+			sql2 = String.format(
+					"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+					filterParameter1.getText(), filterParmeter2.getText());
 		}
 
+		ArrayList<String> queryResulStrings = new ArrayList<>();
 		try {
 			stmt = conn.createStatement();
 			// Creates the view with the info
 			PreparedStatement pst = conn.prepareStatement(sql);
+			pst.execute();
+
+			pst = conn.prepareStatement(sql2);
 			ResultSet rs = pst.executeQuery();
-
-			// TODO check if view is larger than 10 entries, if so display that it needs to
-			// be output to a text file
-
-			// TODO actually list everything
+			while (rs.next()) {
+				queryResulStrings.add(rs.getString(1));
+			}
 
 		} catch (SQLException se) {
 			// Handle errors for JDBC
 			se.printStackTrace();
+		}
+
+		if (queryResulStrings.size() <= 10 || outputToTextFile) {
+			for (String s : queryResulStrings) {
+				queryOutputTextField.setText(s + ", " + queryOutputTextField.getText());
+			}
+		} else {
+			// TODO print to file
 		}
 		// catch (IOException e) {
 		// // File Not Found Catch
@@ -193,7 +250,11 @@ public class IMDBGUI {
 			case "submit":
 				submitQuery();
 				break;
+			case "acknowledge connection":
+				connectionPopup.hide();
+				break;
 			}
+
 		}
 	}
 }
