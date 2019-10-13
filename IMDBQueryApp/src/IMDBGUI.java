@@ -1,5 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,18 +7,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
 public class IMDBGUI {
 
-	final String[] optionsarray = { "None", "Movie Title", "Release Year", "Actor", "Producer", "Director",
-			"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
+	final String[] optionsarray = { "None", "Actor", "Producer", "Director" };
 	static Connection conn = null;
 	static Statement stmt = null;
 
@@ -27,7 +21,7 @@ public class IMDBGUI {
 	static final String DB_URL = "jdbc:postgresql://db-315.cse.tamu.edu/shanepoldervaart_db";
 
 	JFrame frame;
-	JPanel queryPanel;
+	JPanel query3Panel;
 	JCheckBox toggleTextOutput;
 	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
@@ -50,11 +44,11 @@ public class IMDBGUI {
 
 		prepConnectionPopup();
 		prepUserInfoPopup();
-		prepQueryPanel();
+		prepQuery3Panel();
 
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
 		frame.add(headerLabel);
-		frame.add(queryPanel);
+		frame.add(query3Panel);
 
 		if (connectToDB("shanepoldervaart", "taeKwondo9") == 0) {
 			connectionPopup.show();
@@ -99,10 +93,10 @@ public class IMDBGUI {
 
 	}
 
-	void prepQueryPanel() {
+	void prepQuery3Panel() {
 		// Query Panel
-		queryPanel = new JPanel();
-		queryPanel.setLayout(new FlowLayout());
+		query3Panel = new JPanel();
+		query3Panel.setLayout(new FlowLayout());
 		JButton submitButton = new JButton("Submit Query");
 		toggleTextOutput = new JCheckBox("Output to Text File");
 		JButton button = new JButton("+");
@@ -117,14 +111,14 @@ public class IMDBGUI {
 		filterParmeter2 = new JTextField(20);
 		queryOutputTextField = new JTextField(50);
 		queryOutputTextField.setEditable(false);
-		queryPanel.add(filterOptions1);
-		queryPanel.add(filterParameter1);
-		queryPanel.add(filterOptions2);
-		queryPanel.add(filterParmeter2);
-		queryPanel.add(button);
-		queryPanel.add(toggleTextOutput);
-		queryPanel.add(submitButton);
-		queryPanel.add(queryOutputTextField);
+		query3Panel.add(filterOptions1);
+		query3Panel.add(filterParameter1);
+		query3Panel.add(filterOptions2);
+		query3Panel.add(filterParmeter2);
+		query3Panel.add(button);
+		query3Panel.add(toggleTextOutput);
+		query3Panel.add(submitButton);
+		query3Panel.add(queryOutputTextField);
 
 	}
 
@@ -181,31 +175,39 @@ public class IMDBGUI {
 	}
 
 	private void submitQuery() {
-		// TODO Make submit query work for all cases
 		// figure out what the 2 options are
 		// make a view in sql
-		// order it all so that it has the multiple includes? idk how
-		// if that is longer than 10 rows then output as .txt
+		// execute the query
 
 		// EXAMPLE COMPLETED QUERY:
 
 		// SELECT * FROM movietest WHERE name = 'Harry Beaumont'
-		// AND title = (SELECT title FROM movietest WHERE name = 'Edna Flugrath');
+		// AND title = ANY(SELECT title FROM movietest WHERE name = 'Edna Flugrath');
 
 		// not sure if I want to do this modularly. Probably a good idea
 		// sql is for making the view sql2 is for making the query
-		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name FROM team.movies ";
+		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, team.ratings.avgrating FROM team.movies ";
 		String sql2 = "";
+		String valToGet = "COUNT(*)";
+
+		// if one of them equals "None" only do the basic view creation and query.
+		// if both equal "None" do nothing
+		// if they are the same one only need sql to have just that table.
+		// if different change sql view creation and the query
+		String textField1 = (String) filterOptions1.getSelectedItem();
+		String textField2 = (String) filterOptions2.getSelectedItem();
 
 		// 2 actors funcitioning
 		if ((String) filterOptions1.getSelectedItem() == "Actor"
 				&& (String) filterOptions2.getSelectedItem() == "Actor") {
 			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id;");
+					+ "INNER JOIN team.people ON team.characters.personid = team.people.id"
+					+ "INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id ORDER BY avgrating desc");
 
+			// Gets the count of the query
 			sql2 = String.format(
-					"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
-					filterParameter1.getText(), filterParmeter2.getText());
+					"SELECT %s FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+					valToGet, filterParameter1.getText(), filterParmeter2.getText());
 		}
 
 		ArrayList<String> queryResulStrings = new ArrayList<>();
@@ -221,13 +223,17 @@ public class IMDBGUI {
 				queryResulStrings.add(rs.getString(1));
 			}
 
+			// Drop view
+			pst = conn.prepareStatement("DROP VIEW movieView;");
+			pst.execute();
+
 		} catch (SQLException se) {
 			// Handle errors for JDBC
 			se.printStackTrace();
 		}
 
-		// length check
-		if (queryResulStrings.size() <= 10 || outputToTextFile) {
+		// if result longer than 10 rows or the toggle is on then output as .txt
+		if (queryResulStrings.size() <= 10 && !outputToTextFile) {
 			queryOutputTextField.setEditable(true);
 			for (String s : queryResulStrings) {
 				queryOutputTextField.setText(s + ", " + queryOutputTextField.getText());
@@ -235,7 +241,15 @@ public class IMDBGUI {
 			}
 			queryOutputTextField.setEditable(false);
 		} else {
-			// TODO print to file
+			try {
+				FileWriter fileOut = new FileWriter("a.txt");
+				fileOut.write("Hello\n");
+				fileOut.write("There");
+				fileOut.flush();
+				fileOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
