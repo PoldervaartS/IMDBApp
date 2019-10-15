@@ -174,7 +174,7 @@ public class IMDBGUI {
 		return 0;
 	}
 
-	private void submitQuery() {
+	private void submitQuery3() {
 		// figure out what the 2 options are
 		// make a view in sql
 		// execute the query
@@ -186,38 +186,91 @@ public class IMDBGUI {
 
 		// not sure if I want to do this modularly. Probably a good idea
 		// sql is for making the view sql2 is for making the query
-		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, team.ratings.avgrating FROM team.movies ";
-		String sql2 = "";
-		String valToGet = "COUNT(*)";
+		String viewQuery = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, team.ratings.avgrating FROM team.movies ";
+		// TODO make the ORDER BY avgrating desc; last
+		String tableJoin = "INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id ";
+		String selectQuery = "";
 
 		// if one of them equals "None" only do the basic view creation and query.
 		// if both equal "None" do nothing
 		// if they are the same one only need sql to have just that table.
 		// if different change sql view creation and the query
+		// TODO modularity and logic things.
 		String textField1 = (String) filterOptions1.getSelectedItem();
 		String textField2 = (String) filterOptions2.getSelectedItem();
+		boolean areSame = textField1 == textField2;
+		if (textField1 == "Actor" || textField2 == "Actor") {
+
+			viewQuery += " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+					+ "INNER JOIN team.people ON team.characters.personid = team.people.id";
+			if (textField2 == "Actor") { // Used to make order of inputs not matter
+				String temp = textField1;
+				textField1 = textField2;
+				textField2 = temp;
+			}
+
+			if (areSame) {
+				viewQuery += ";";
+				selectQuery = String.format(
+						"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+						filterParameter1.getText(), filterParmeter2.getText());
+			} else if (textField2 == "Producer") {
+				//TODO figure out what to do on ones that have different tables to look at
+				// maybe it's 2 different views, ideally I want to keep it as 1 tho
+				viewQuery += "INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id"
+
+			} else if (textField2 == "Director") {
+
+			}else{
+				viewQuery+=";";
+				selectQuery+=";";
+			}
+
+		} else if (textField1 == "Producer") {
+
+			if (textField2 == "Producer") { // Used to make order of inputs not matter
+				String temp = textField1;
+				textField1 = textField2;
+				textField2 = temp;
+			}
+
+			if (areSame) {
+				viewQuery += " INNER JOIN team.jobs ON team.jobs.movieid = team.movies.id "
+						+ "INNER JOIN team.people ON team.jobs.personid = team.people.id;";
+
+				selectQuery = String.format(
+						"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+						filterParameter1.getText(), filterParmeter2.getText());
+			} else if (textField2 == "Actor") {
+
+			} else if (textField2 == "Director") {
+
+			}
+
+		} else if (textField1 == "Director") {
+
+		}
 
 		// 2 actors funcitioning
 		if ((String) filterOptions1.getSelectedItem() == "Actor"
 				&& (String) filterOptions2.getSelectedItem() == "Actor") {
-			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id"
-					+ "INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id ORDER BY avgrating desc");
+			viewQuery = String
+					.format(viewQuery + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+							+ "INNER JOIN team.people ON team.characters.personid = team.people.id;");
 
-			// Gets the count of the query
-			sql2 = String.format(
-					"SELECT %s FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
-					valToGet, filterParameter1.getText(), filterParmeter2.getText());
+			selectQuery = String.format(
+					"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+					filterParameter1.getText(), filterParmeter2.getText());
 		}
 
 		ArrayList<String> queryResulStrings = new ArrayList<>();
 		try {
 			stmt = conn.createStatement();
 			// Creates the view with the info
-			PreparedStatement pst = conn.prepareStatement(sql);
+			PreparedStatement pst = conn.prepareStatement(viewQuery);
 			pst.execute();
 
-			pst = conn.prepareStatement(sql2);
+			pst = conn.prepareStatement(selectQuery);
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				queryResulStrings.add(rs.getString(1));
@@ -263,7 +316,7 @@ public class IMDBGUI {
 				outputToTextFile = !outputToTextFile;
 				break;
 			case "submit":
-				submitQuery();
+				submitQuery3();
 				break;
 			case "acknowledge connection":
 				connectionPopup.hide();
