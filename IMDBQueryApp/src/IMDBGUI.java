@@ -7,14 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.*; 
 import java.util.*;
-
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +29,7 @@ public class IMDBGUI {
 	JComboBox<String> filterOptions1, filterOptions2;
 
 	JTextField filterParameter1, filterParameter2, queryOutputTextField, usernameTextField, passwordTextField,
-		startYear, endYear, filterParameters1, filterParameters2, query1OutputTextField,;
+			startYear, endYear, filterParameters1, filterParameters2, query1OutputTextField;
 	boolean outputToTextFile = false;
 	boolean outputToTextFile1 = false;
 	Popup connectionPopup, userInfoPopup;
@@ -45,7 +38,7 @@ public class IMDBGUI {
 		frame = new JFrame("IMDB Query App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 800);
-		frame.setLayout(new GridLayout(5, 1));
+		frame.setLayout(new GridLayout(6, 1));
 
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
@@ -62,13 +55,15 @@ public class IMDBGUI {
 
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
 		JLabel betweenLabel = new JLabel("Search between 2 years", JLabel.CENTER);
-		JLabel headerLabel1 = new JLabel("Question 1 Degree Of Seperation (Insert two actors in first two input text box)", JLabel.CENTER);
-		frame.add(headerLabel);
-		frame.add(query3Panel);
+		JLabel headerLabel1 = new JLabel(
+				"Question 1 Degree Of Seperation (Insert two actors in first two input text box)", JLabel.CENTER);
+		frame.add(headerLabel1);
+		frame.add(query1Panel);
 		frame.add(betweenLabel);
 		frame.add(betweenPanel);
-		frame.add(query1Panel);
-    
+		frame.add(headerLabel);
+		frame.add(query3Panel);
+
 		if (connectToDB("shanepoldervaart", "taeKwondo9") == 0) {
 			connectionPopup.show();
 			show();
@@ -137,10 +132,9 @@ public class IMDBGUI {
 		query3Panel.add(submitButton);
 		query3Panel.add(queryOutputTextField);
 
-
 	}
 
-	void prepQuery1Panel(){
+	void prepQuery1Panel() {
 
 		query1Panel = new JPanel();
 		query1Panel.setLayout(new FlowLayout());
@@ -160,13 +154,13 @@ public class IMDBGUI {
 		query1Panel.add(submitButton2);
 		query1Panel.add(query1OutputTextField);
 	}
-	
+
 	void prepBetweenPanel() {
 		// Query Panel
 		betweenPanel = new JPanel();
 		betweenPanel.setLayout(new FlowLayout());
 		JButton submitButton = new JButton("Submit Query");
-		submitButton.setActionCommand("submitBetween");//might need to change
+		submitButton.setActionCommand("submitBetween");// might need to change
 		submitButton.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
 		toggleTextOutput.addActionListener(new ButtonClickListener());
@@ -402,104 +396,79 @@ public class IMDBGUI {
 			}
 		}
 
-
 	}
-
 
 	private void submitQuery2() {
 
-	        
-    	    String actor1 = filterParameters1.getText();
-	        String actor2 = filterParameters2.getText();
-            String sql11 = String.format(
-						"SELECT id FROM team.people WHERE name = $$%s$$;",
-						actor1);
-            String sql22 = String.format(
-						"SELECT id FROM team.people WHERE name = $$%s$$;",
-						actor2);
-			ArrayList<String> actstr1 = new ArrayList<>();
-			ArrayList<String> actstr2 = new ArrayList<>();
+		String actor1 = filterParameters1.getText();
+		String actor2 = filterParameters2.getText();
+		String sql11 = String.format("SELECT id FROM team.people WHERE name = $$%s$$;", actor1);
+		String sql22 = String.format("SELECT id FROM team.people WHERE name = $$%s$$;", actor2);
+		ArrayList<String> actstr1 = new ArrayList<>();
+		ArrayList<String> actstr2 = new ArrayList<>();
 
-			try 
-			{
-				stmt = conn.createStatement();
-				
-				PreparedStatement pst = conn.prepareStatement(sql11);
-				ResultSet rs = pst.executeQuery();
-				while (rs.next()) {
-					actstr1.add(rs.getString(1));
-				}
+		try {
+			stmt = conn.createStatement();
 
-				pst = conn.prepareStatement(sql22);
-				rs = pst.executeQuery();
-				while (rs.next()) {
-					actstr2.add(rs.getString(1));
-				}
-
-			} catch (SQLException se) 
-			{
-				se.printStackTrace();
-			}
-           
-
-            ArrayList<String> movieidact1 = new ArrayList<>();
-			ArrayList<String> movieidact2 = new ArrayList<>();
-
-			sql11 = String.format(
-						"SELECT movieid FROM team.characters WHERE personid = $$%s$$;",
-						actstr1.get(0));
-            sql22 = String.format(
-						"SELECT movieid FROM team.characters WHERE personid = $$%s$$;",
-						actstr2.get(0));
-
-			try 
-			{
-				stmt = conn.createStatement();
-				
-				PreparedStatement pst = conn.prepareStatement(sql11);
-				ResultSet rs = pst.executeQuery();
-				while (rs.next()) {
-					movieidact1.add(rs.getString(1));
-				}
-
-				pst = conn.prepareStatement(sql22);
-				rs = pst.executeQuery();
-				while (rs.next()) {
-					movieidact2.add(rs.getString(1));
-				}
-
-			} catch (SQLException se) 
-			{
-				se.printStackTrace();
+			PreparedStatement pst = conn.prepareStatement(sql11);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				actstr1.add(rs.getString(1));
 			}
 
+			pst = conn.prepareStatement(sql22);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				actstr2.add(rs.getString(1));
+			}
 
+		} catch (SQLException se) {
+			se.printStackTrace();
+		}
 
-        	if(outputToTextFile1)
-        	{
+		ArrayList<String> movieidact1 = new ArrayList<>();
+		ArrayList<String> movieidact2 = new ArrayList<>();
 
-            try{
+		sql11 = String.format("SELECT movieid FROM team.characters WHERE personid = $$%s$$;", actstr1.get(0));
+		sql22 = String.format("SELECT movieid FROM team.characters WHERE personid = $$%s$$;", actstr2.get(0));
 
-		      FileWriter myfile = new FileWriter("sandy.txt");
-		      //myfile.write(movieidact1.get(i)+NL);
-		      myfile.write(Arrays.toString(movieidact1.toArray()));
-		      myfile.write(Arrays.toString(movieidact2.toArray()));
+		try {
+			stmt = conn.createStatement();
 
+			PreparedStatement pst = conn.prepareStatement(sql11);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				movieidact1.add(rs.getString(1));
+			}
 
+			pst = conn.prepareStatement(sql22);
+			rs = pst.executeQuery();
+			while (rs.next()) {
+				movieidact2.add(rs.getString(1));
+			}
 
-		      myfile.flush();
-		      myfile.close();
-		    
+		} catch (SQLException se) {
+			se.printStackTrace();
+		}
 
-		    } catch (Exception se) 
-			{
+		if (outputToTextFile1) {
+
+			try {
+
+				FileWriter myfile = new FileWriter("sandy.txt");
+				// myfile.write(movieidact1.get(i)+NL);
+				myfile.write(Arrays.toString(movieidact1.toArray()));
+				myfile.write(Arrays.toString(movieidact2.toArray()));
+
+				myfile.flush();
+				myfile.close();
+
+			} catch (Exception se) {
 				se.printStackTrace();
 			}
-            }
-		    query1OutputTextField.setText(Arrays.toString(movieidact1.toArray()) + Arrays.toString(movieidact2.toArray()));
-		    
-        
-		
+		}
+		query1OutputTextField.setText(Arrays.toString(movieidact1.toArray()) + Arrays.toString(movieidact2.toArray()));
+
 	}
 
 	private void submitBetween() {
@@ -507,53 +476,56 @@ public class IMDBGUI {
 		String sql2 = "";
 		ArrayList<String> queryResulStrings = new ArrayList<>();
 		ArrayList<String> removeYears = new ArrayList<>();
-		//only for between 2 years
+		// only for between 2 years
 		try {
 			stmt = conn.createStatement();
 			// Creates the view with the info
-			sql = String.format("CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, year FROM team.movies WHERE year >= $$%s$$ AND year <= $$%s$$",startYear.getText(), endYear.getText());
-			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id INNER JOIN team.people ON team.characters.personid = team.people.id;");
+			sql = String.format(
+					"CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, year FROM team.movies WHERE year >= $$%s$$ AND year <= $$%s$$",
+					startYear.getText(), endYear.getText());
+			sql = String.format(sql
+					+ " INNER JOIN team.characters ON team.characters.movieid = team.movies.id INNER JOIN team.people ON team.characters.personid = team.people.id;");
 			PreparedStatement pst = conn.prepareStatement(sql);
 			pst.execute();
-			
+
 			int index = 100;
 			ResultSet rs;
-			while(index != 0) {
-				//gets actors name with most movies
+			while (index != 0) {
+				// gets actors name with most movies
 				sql2 = "SELECT name, COUNT(name) AS vo FROM movieView GROUP BY name ORDER BY vo DESC LIMIT 1;";
 				pst = conn.prepareStatement(sql2);
 				rs = pst.executeQuery();
 				String removeActor = rs.getString(1);
-				//adds actor to output
-				
-				//get movie instead of name */
+				// adds actor to output
+
+				// get movie instead of name */
 				sql = String.format("SELECT title FROM movieView WHERE name = $$%s$$;", removeActor);
 				pst = conn.prepareStatement(sql);
 				rs = pst.executeQuery();
-				
+
 				while (rs.next()) {
 					queryResulStrings.add(rs.getString(1));
 				}
-				//gets years that actor covers
+				// gets years that actor covers
 				sql = String.format("SELECT year FROM movieView WHERE name = $$%s$$;", removeActor);
 				pst = conn.prepareStatement(sql);
 				rs = pst.executeQuery();
 				while (rs.next()) {
 					removeYears.add(rs.getString(1));
 				}
-				//removes years from view
-				for(int i = 0; i < removeYears.size();i++) {
+				// removes years from view
+				for (int i = 0; i < removeYears.size(); i++) {
 					sql = String.format("DELETE FROM movieView WHERE year = $$%s$$;", removeYears.get(i));
 					pst = conn.prepareStatement(sql);
 				}
 				removeYears.clear();
-				//gets count of view to see if it needs to continue
+				// gets count of view to see if it needs to continue
 				sql = "SELECT COUNT(*) FROM movieView;";
 				pst = conn.prepareStatement(sql);
 				rs = pst.executeQuery();
 				index = rs.getInt(0);
 			}
-			//prevents unnecessary calls to database
+			// prevents unnecessary calls to database
 			sql = "";
 			sql2 = "";
 		} catch (SQLException se) {
@@ -561,7 +533,7 @@ public class IMDBGUI {
 			se.printStackTrace();
 		}
 	}
-	
+
 	private class ButtonClickListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
