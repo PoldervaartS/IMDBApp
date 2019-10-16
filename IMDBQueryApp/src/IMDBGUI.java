@@ -11,6 +11,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.*; 
+import java.util.*;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,24 +27,27 @@ public class IMDBGUI {
 			"Average Rating", "Number of Votes", "Country (Abbreviation)", "Genre" };
 	static Connection conn = null;
 	static Statement stmt = null;
+	public static final String NL = System.getProperty("line.separator");
 
 	static final String JDBC_DRIVER = "org.postgresql.Driver";
 	static final String DB_URL = "jdbc:postgresql://db-315.cse.tamu.edu/shanepoldervaart_db";
 
 	JFrame frame;
-	JPanel queryPanel;
-	JCheckBox toggleTextOutput;
+	JPanel queryPanel,query1Panel;
+	JCheckBox toggleTextOutput,toggleTextOutput1;
 	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
-	JTextField filterParameter1, filterParmeter2, queryOutputTextField, usernameTextField, passwordTextField;
+	JTextField filterParameter1, filterParmeter2, queryOutputTextField,query1OutputTextField, 
+	           usernameTextField, passwordTextField,filterParameters1,filterParameters2;
 	boolean outputToTextFile = false;
+	boolean outputToTextFile1 = false;
 	Popup connectionPopup, userInfoPopup;
 
 	public IMDBGUI() {
 		frame = new JFrame("IMDB Query App");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(800, 500);
-		frame.setLayout(new GridLayout(4, 1));
+		frame.setSize(800, 800);
+		frame.setLayout(new GridLayout(5, 1));
 
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent windowEvent) {
@@ -51,10 +59,14 @@ public class IMDBGUI {
 		prepConnectionPopup();
 		prepUserInfoPopup();
 		prepQueryPanel();
+		prepQuery1Panel();
 
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
+		JLabel headerLabel1 = new JLabel("Question 1 Degree Of Seperation (Insert two actors in first two input text box)", JLabel.CENTER);
 		frame.add(headerLabel);
 		frame.add(queryPanel);
+		frame.add(headerLabel1);
+		frame.add(query1Panel);
 
 		if (connectToDB("shanepoldervaart", "taeKwondo9") == 0) {
 			connectionPopup.show();
@@ -125,6 +137,30 @@ public class IMDBGUI {
 		queryPanel.add(toggleTextOutput);
 		queryPanel.add(submitButton);
 		queryPanel.add(queryOutputTextField);
+		
+
+
+	}
+
+	void prepQuery1Panel(){
+
+		query1Panel = new JPanel();
+		query1Panel.setLayout(new FlowLayout());
+		JButton submitButton2 = new JButton("Submit");
+		toggleTextOutput1 = new JCheckBox("Output to Text File");
+		submitButton2.setActionCommand("submit2");
+		submitButton2.addActionListener(new ButtonClickListener());
+		toggleTextOutput1.setActionCommand("toggleOutputFile1");
+		toggleTextOutput1.addActionListener(new ButtonClickListener());
+		filterParameters1 = new JTextField(20);
+		filterParameters2 = new JTextField(20);
+		query1OutputTextField = new JTextField(50);
+		query1OutputTextField.setEditable(false);
+		query1Panel.add(filterParameters1);
+		query1Panel.add(filterParameters2);
+		query1Panel.add(toggleTextOutput1);
+		query1Panel.add(submitButton2);
+		query1Panel.add(query1OutputTextField);
 
 	}
 
@@ -238,7 +274,106 @@ public class IMDBGUI {
 			// TODO print to file
 		}
 
+
 	}
+
+
+	private void submitQuery2() {
+
+	        
+    	    String actor1 = filterParameters1.getText();
+	        String actor2 = filterParameters2.getText();
+            String sql11 = String.format(
+						"SELECT id FROM team.people WHERE name = $$%s$$;",
+						actor1);
+            String sql22 = String.format(
+						"SELECT id FROM team.people WHERE name = $$%s$$;",
+						actor2);
+			ArrayList<String> actstr1 = new ArrayList<>();
+			ArrayList<String> actstr2 = new ArrayList<>();
+
+			try 
+			{
+				stmt = conn.createStatement();
+				
+				PreparedStatement pst = conn.prepareStatement(sql11);
+				ResultSet rs = pst.executeQuery();
+				while (rs.next()) {
+					actstr1.add(rs.getString(1));
+				}
+
+				pst = conn.prepareStatement(sql22);
+				rs = pst.executeQuery();
+				while (rs.next()) {
+					actstr2.add(rs.getString(1));
+				}
+
+			} catch (SQLException se) 
+			{
+				se.printStackTrace();
+			}
+           
+
+            ArrayList<String> movieidact1 = new ArrayList<>();
+			ArrayList<String> movieidact2 = new ArrayList<>();
+
+			sql11 = String.format(
+						"SELECT movieid FROM team.characters WHERE personid = $$%s$$;",
+						actstr1.get(0));
+            sql22 = String.format(
+						"SELECT movieid FROM team.characters WHERE personid = $$%s$$;",
+						actstr2.get(0));
+
+			try 
+			{
+				stmt = conn.createStatement();
+				
+				PreparedStatement pst = conn.prepareStatement(sql11);
+				ResultSet rs = pst.executeQuery();
+				while (rs.next()) {
+					movieidact1.add(rs.getString(1));
+				}
+
+				pst = conn.prepareStatement(sql22);
+				rs = pst.executeQuery();
+				while (rs.next()) {
+					movieidact2.add(rs.getString(1));
+				}
+
+			} catch (SQLException se) 
+			{
+				se.printStackTrace();
+			}
+
+
+
+        	if(outputToTextFile1)
+        	{
+
+            try{
+
+		      FileWriter myfile = new FileWriter("sandy.txt");
+		      //myfile.write(movieidact1.get(i)+NL);
+		      myfile.write(Arrays.toString(movieidact1.toArray()));
+		      myfile.write(Arrays.toString(movieidact2.toArray()));
+
+
+
+		      myfile.flush();
+		      myfile.close();
+		    
+
+		    } catch (Exception se) 
+			{
+				se.printStackTrace();
+			}
+            }
+		    query1OutputTextField.setText(Arrays.toString(movieidact1.toArray()) + Arrays.toString(movieidact2.toArray()));
+		    
+        
+		
+	}
+
 
 	private class ButtonClickListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
@@ -247,6 +382,9 @@ public class IMDBGUI {
 			switch (command) {
 			case "toggleOutputFile":
 				outputToTextFile = !outputToTextFile;
+				break;
+			case "toggleOutputFile1":
+				outputToTextFile1 = !outputToTextFile1;
 				break;
 			case "submit":
 				submitQuery();
@@ -262,8 +400,12 @@ public class IMDBGUI {
 					System.out.println("Failed to connect");
 				}
 				break;
+			case "submit2":
+				submitQuery2();
+				break;
 			}
 
 		}
 	}
+
 }
