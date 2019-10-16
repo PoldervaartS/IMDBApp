@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-<<<<<<< HEAD
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
@@ -17,8 +16,6 @@ import java.io.*;
 import java.util.*;
 
 
-=======
->>>>>>> 16edc943fea447a5c0662b1824e25b6826051579
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -34,20 +31,12 @@ public class IMDBGUI {
 	static final String DB_URL = "jdbc:postgresql://db-315.cse.tamu.edu/shanepoldervaart_db";
 
 	JFrame frame;
-<<<<<<< HEAD
-	JPanel queryPanel,query1Panel;
-	JCheckBox toggleTextOutput,toggleTextOutput1;
-	// TODO make this stuff into arraylists of these things in order to modularize
-	JComboBox<String> filterOptions1, filterOptions2;
-	JTextField filterParameter1, filterParmeter2, queryOutputTextField,query1OutputTextField, 
-	           usernameTextField, passwordTextField,filterParameters1,filterParameters2;
-=======
-	JPanel query3Panel, betweenPanel;
-	JCheckBox toggleTextOutput;
+	JPanel query3Panel, betweenPanel, query1Panel;
+	JCheckBox toggleTextOutput, toggleTextOutput1;
 	JComboBox<String> filterOptions1, filterOptions2;
 
-	JTextField filterParameter1, filterParameter2, queryOutputTextField, usernameTextField, passwordTextField, startYear, endYear;
->>>>>>> 16edc943fea447a5c0662b1824e25b6826051579
+	JTextField filterParameter1, filterParameter2, queryOutputTextField, usernameTextField, passwordTextField,
+		startYear, endYear, filterParameters1, filterParameters2, query1OutputTextField,;
 	boolean outputToTextFile = false;
 	boolean outputToTextFile1 = false;
 	Popup connectionPopup, userInfoPopup;
@@ -67,31 +56,19 @@ public class IMDBGUI {
 
 		prepConnectionPopup();
 		prepUserInfoPopup();
-<<<<<<< HEAD
-		prepQueryPanel();
+		prepQuery3Panel();
+		prepBetweenPanel();
 		prepQuery1Panel();
 
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
-		JLabel headerLabel1 = new JLabel("Question 1 Degree Of Seperation (Insert two actors in first two input text box)", JLabel.CENTER);
-		frame.add(headerLabel);
-		frame.add(queryPanel);
-		frame.add(headerLabel1);
-		frame.add(query1Panel);
-
-=======
-
-		prepQuery3Panel();
-		prepBetweenPanel();
-
-
-		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
 		JLabel betweenLabel = new JLabel("Search between 2 years", JLabel.CENTER);
+		JLabel headerLabel1 = new JLabel("Question 1 Degree Of Seperation (Insert two actors in first two input text box)", JLabel.CENTER);
 		frame.add(headerLabel);
 		frame.add(query3Panel);
 		frame.add(betweenLabel);
 		frame.add(betweenPanel);
+		frame.add(query1Panel);
     
->>>>>>> 16edc943fea447a5c0662b1824e25b6826051579
 		if (connectToDB("shanepoldervaart", "taeKwondo9") == 0) {
 			connectionPopup.show();
 			show();
@@ -151,16 +128,14 @@ public class IMDBGUI {
 		filterParameter2 = new JTextField(20);
 		queryOutputTextField = new JTextField(50);
 		queryOutputTextField.setEditable(false);
-<<<<<<< HEAD
-		queryPanel.add(filterOptions1);
-		queryPanel.add(filterParameter1);
-		queryPanel.add(filterOptions2);
-		queryPanel.add(filterParmeter2);
-		queryPanel.add(button);
-		queryPanel.add(toggleTextOutput);
-		queryPanel.add(submitButton);
-		queryPanel.add(queryOutputTextField);
-		
+
+		query3Panel.add(filterOptions1);
+		query3Panel.add(filterParameter1);
+		query3Panel.add(filterOptions2);
+		query3Panel.add(filterParameter2);
+		query3Panel.add(toggleTextOutput);
+		query3Panel.add(submitButton);
+		query3Panel.add(queryOutputTextField);
 
 
 	}
@@ -184,15 +159,6 @@ public class IMDBGUI {
 		query1Panel.add(toggleTextOutput1);
 		query1Panel.add(submitButton2);
 		query1Panel.add(query1OutputTextField);
-=======
-		query3Panel.add(filterOptions1);
-		query3Panel.add(filterParameter1);
-		query3Panel.add(filterOptions2);
-		query3Panel.add(filterParameter2);
-		query3Panel.add(toggleTextOutput);
-		query3Panel.add(submitButton);
-		query3Panel.add(queryOutputTextField);
-
 	}
 	
 	void prepBetweenPanel() {
@@ -209,7 +175,6 @@ public class IMDBGUI {
 		betweenPanel.add(startYear);
 		betweenPanel.add(endYear);
 		betweenPanel.add(submitButton);
->>>>>>> 16edc943fea447a5c0662b1824e25b6826051579
 
 	}
 
@@ -537,9 +502,6 @@ public class IMDBGUI {
 		
 	}
 
-<<<<<<< HEAD
-
-=======
 	private void submitBetween() {
 		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name FROM team.movies ";
 		String sql2 = "";
@@ -600,7 +562,6 @@ public class IMDBGUI {
 		}
 	}
 	
->>>>>>> 16edc943fea447a5c0662b1824e25b6826051579
 	private class ButtonClickListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
