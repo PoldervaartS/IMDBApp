@@ -23,7 +23,6 @@ public class IMDBGUI {
 	JFrame frame;
 	JPanel query3Panel;
 	JCheckBox toggleTextOutput;
-	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
 	JTextField filterParameter1, filterParmeter2, queryOutputTextField, usernameTextField, passwordTextField;
 	boolean outputToTextFile = false;
@@ -99,8 +98,6 @@ public class IMDBGUI {
 		query3Panel.setLayout(new FlowLayout());
 		JButton submitButton = new JButton("Submit Query");
 		toggleTextOutput = new JCheckBox("Output to Text File");
-		JButton button = new JButton("+");
-		button.setBounds(750, 100, 41, 30);
 		submitButton.setActionCommand("submit");
 		submitButton.addActionListener(new ButtonClickListener());
 		toggleTextOutput.setActionCommand("toggleOutputFile");
@@ -115,7 +112,6 @@ public class IMDBGUI {
 		query3Panel.add(filterParameter1);
 		query3Panel.add(filterOptions2);
 		query3Panel.add(filterParmeter2);
-		query3Panel.add(button);
 		query3Panel.add(toggleTextOutput);
 		query3Panel.add(submitButton);
 		query3Panel.add(queryOutputTextField);
