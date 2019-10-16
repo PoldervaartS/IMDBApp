@@ -186,7 +186,7 @@ public class IMDBGUI {
 
 		// not sure if I want to do this modularly. Probably a good idea
 		// sql is for making the view sql2 is for making the query
-		String viewQuery = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, team.ratings.avgrating FROM team.movies ";
+		String viewQuery = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, team.ratings.avgrating ";
 		// TODO make the ORDER BY avgrating desc; last
 		String tableJoin = "INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id ";
 		String selectQuery = "";
@@ -201,33 +201,39 @@ public class IMDBGUI {
 		boolean areSame = textField1 == textField2;
 		if (textField1 == "Actor" || textField2 == "Actor") {
 
-			viewQuery += " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id";
+			
 			if (textField2 == "Actor") { // Used to make order of inputs not matter
 				String temp = textField1;
 				textField1 = textField2;
 				textField2 = temp;
 			}
 
+			selectQuery = String.format("SELECT title FROM movieView WHERE name = $$%s$$ ", textField1);
+
 			if (areSame) {
-				viewQuery += ";";
-				selectQuery = String.format(
-						"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
-						filterParameter1.getText(), filterParmeter2.getText());
+				viewQuery += "FROM team.movies "; 
+				selectQuery += String.format( selectQuery +
+					"AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$) ORDER BY avgrating desc;",
+					textField2);
 			} else if (textField2 == "Producer") {
-				//TODO figure out what to do on ones that have different tables to look at
-				// maybe it's 2 different views, ideally I want to keep it as 1 tho
-				viewQuery += "INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id"
+				viewQuery += "team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id ";
+				selectQuery += "AND title = ANY(SELECT title FROM movieView WHERE name=$$%s$$ AND position=\'producer\');";
 
 			} else if (textField2 == "Director") {
+				viewQuery += "team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id ";
+				selectQuery += String.format("AND title = ANY(SELECT title FROM movieView WHERE name=$$%s$$"
+					+ "AND (position=\'director\'OR position=\'co-director\')) ORDER BY avgrating desc;", textField2);
 
 			}else{
-				viewQuery+=";";
-				selectQuery+=";";
+				selectQuery+="ORDER BY avgrating desc;";
 			}
+
+			viewQuery += " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+				+ "INNER JOIN team.people ON team.characters.personid = team.people.id;";
 
 		} else if (textField1 == "Producer") {
 
+			viewQuery += "team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id ";
 			if (textField2 == "Producer") { // Used to make order of inputs not matter
 				String temp = textField1;
 				textField1 = textField2;
