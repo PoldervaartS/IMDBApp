@@ -27,11 +27,11 @@ public class IMDBGUI {
 	static final String DB_URL = "jdbc:postgresql://db-315.cse.tamu.edu/shanepoldervaart_db";
 
 	JFrame frame;
-	JPanel queryPanel;
+	JPanel queryPanel, betweenPanel;
 	JCheckBox toggleTextOutput;
 	// TODO make this stuff into arraylists of these things in order to modularize
 	JComboBox<String> filterOptions1, filterOptions2;
-	JTextField filterParameter1, filterParmeter2, queryOutputTextField, usernameTextField, passwordTextField;
+	JTextField filterParameter1, filterParmeter2, queryOutputTextField, usernameTextField, passwordTextField, startYear, endYear;
 	boolean outputToTextFile = false;
 	Popup connectionPopup, userInfoPopup;
 
@@ -51,10 +51,14 @@ public class IMDBGUI {
 		prepConnectionPopup();
 		prepUserInfoPopup();
 		prepQueryPanel();
+		prepBetweenPanel();
 
 		JLabel headerLabel = new JLabel("Create your Movie Query", JLabel.CENTER);
+		JLabel betweenLabel = new JLabel("Search between 2 years", JLabel.CENTER);
 		frame.add(headerLabel);
 		frame.add(queryPanel);
+		frame.add(betweenLabel);
+		frame.add(betweenPanel);
 
 		if (connectToDB("shanepoldervaart", "taeKwondo9") == 0) {
 			connectionPopup.show();
@@ -127,6 +131,23 @@ public class IMDBGUI {
 		queryPanel.add(queryOutputTextField);
 
 	}
+	
+	void prepBetweenPanel() {
+		// Query Panel
+		betweenPanel = new JPanel();
+		betweenPanel.setLayout(new FlowLayout());
+		JButton submitButton = new JButton("Submit Query");
+		submitButton.setActionCommand("submitBetween");//might need to change
+		submitButton.addActionListener(new ButtonClickListener());
+		toggleTextOutput.setActionCommand("toggleOutputFile");
+		toggleTextOutput.addActionListener(new ButtonClickListener());
+		startYear = new JTextField(20);
+		endYear = new JTextField(20);
+		betweenPanel.add(startYear);
+		betweenPanel.add(endYear);
+		betweenPanel.add(submitButton);
+
+	}
 
 	int connectToDB(String USER, String PASS) {
 
@@ -194,21 +215,24 @@ public class IMDBGUI {
 
 		// not sure if I want to do this modularly. Probably a good idea
 		// sql is for making the view sql2 is for making the query
+		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name FROM team.movies ";
 		String sql2 = "";
+		ArrayList<String> queryResulStrings = new ArrayList<>();
 
 		// 2 actors funcitioning
-		if ((String) filterOptions1.getSelectedItem() == "Actor"
-				&& (String) filterOptions2.getSelectedItem() == "Actor") {
-			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id;");
+				if ((String) filterOptions1.getSelectedItem() == "Actor"
+						&& (String) filterOptions2.getSelectedItem() == "Actor") {
+					sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
+							+ "INNER JOIN team.people ON team.characters.personid = team.people.id;");
 
-			sql2 = String.format(
-					"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
-					filterParameter1.getText(), filterParmeter2.getText());
-		}
+					sql2 = String.format(
+							"SELECT title FROM movieView WHERE name = $$%s$$ AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$);",
+							filterParameter1.getText(), filterParmeter2.getText());
+				}
 
-		ArrayList<String> queryResulStrings = new ArrayList<>();
 		try {
 			stmt = conn.createStatement();
 			// Creates the view with the info
@@ -240,6 +264,66 @@ public class IMDBGUI {
 
 	}
 
+	private void submitBetween() {
+		String sql = "CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name FROM team.movies ";
+		String sql2 = "";
+		ArrayList<String> queryResulStrings = new ArrayList<>();
+		ArrayList<String> removeYears = new ArrayList<>();
+		//only for between 2 years
+		try {
+			stmt = conn.createStatement();
+			// Creates the view with the info
+			sql = String.format("CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, year FROM team.movies WHERE year >= $$%s$$ AND year <= $$%s$$",startYear.getText(), endYear.getText());
+			sql = String.format(sql + " INNER JOIN team.characters ON team.characters.movieid = team.movies.id INNER JOIN team.people ON team.characters.personid = team.people.id;");
+			PreparedStatement pst = conn.prepareStatement(sql);
+			pst.execute();
+			
+			int index = 100;
+			ResultSet rs;
+			while(index != 0) {
+				//gets actors name with most movies
+				sql2 = "SELECT name, COUNT(name) AS vo FROM movieView GROUP BY name ORDER BY vo DESC LIMIT 1;";
+				pst = conn.prepareStatement(sql2);
+				rs = pst.executeQuery();
+				String removeActor = rs.getString(1);
+				//adds actor to output
+				
+				//get movie instead of name */
+				sql = String.format("SELECT title FROM movieView WHERE name = $$%s$$;", removeActor);
+				pst = conn.prepareStatement(sql);
+				rs = pst.executeQuery();
+				
+				while (rs.next()) {
+					queryResulStrings.add(rs.getString(1));
+				}
+				//gets years that actor covers
+				sql = String.format("SELECT year FROM movieView WHERE name = $$%s$$;", removeActor);
+				pst = conn.prepareStatement(sql);
+				rs = pst.executeQuery();
+				while (rs.next()) {
+					removeYears.add(rs.getString(1));
+				}
+				//removes years from view
+				for(int i = 0; i < removeYears.size();i++) {
+					sql = String.format("DELETE FROM movieView WHERE year = $$%s$$;", removeYears.get(i));
+					pst = conn.prepareStatement(sql);
+				}
+				removeYears.clear();
+				//gets count of view to see if it needs to continue
+				sql = "SELECT COUNT(*) FROM movieView;";
+				pst = conn.prepareStatement(sql);
+				rs = pst.executeQuery();
+				index = rs.getInt(0);
+			}
+			//prevents unnecessary calls to database
+			sql = "";
+			sql2 = "";
+		} catch (SQLException se) {
+			// Handle errors for JDBC
+			se.printStackTrace();
+		}
+	}
+	
 	private class ButtonClickListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			String command = e.getActionCommand();
@@ -250,6 +334,9 @@ public class IMDBGUI {
 				break;
 			case "submit":
 				submitQuery();
+				break;
+			case "submitBetween":
+				submitBetween();
 				break;
 			case "acknowledge connection":
 				connectionPopup.hide();
