@@ -265,23 +265,24 @@ public class IMDBGUI {
 			// The three cases with appropriate table inclusions
 			if (areSame) {
 				viewQuery += "FROM team.movies ";
-				selectQuery += selectQuery
-						+ "AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$) ORDER BY avgrating desc;";
+				selectQuery += "AND title = ANY(SELECT title FROM movieView WHERE name = $$%s$$) ORDER BY avgrating desc;";
 			} else if (selectedSearch2 == "Producer") {
-				viewQuery += "team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id ";
-				selectQuery += "AND title = ANY(SELECT title FROM movieView WHERE name=$$%s$$ AND position=\'producer\');";
+				viewQuery += ", team.jobs.department FROM team.movies INNER JOIN team.jobs ON team.jobs.movieid = team.movies.id ";
+				selectQuery += "AND title = ANY(SELECT title FROM movieView WHERE name=$$%s$$ AND department=\'writer\');";
 
 			} else if (selectedSearch2 == "Director") {
-				viewQuery += "team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id ";
+				viewQuery += ", team.jobs.position FROM team.movies INNER JOIN team.jobs ON team.jobs.movieid = team.movies.id ";
 				selectQuery += "AND title = ANY(SELECT title FROM movieView WHERE name=$$%s$$"
 						+ "AND (position=\'director\'OR position=\'co-director\')) ORDER BY avgrating desc;";
 
 			} else {
 				selectQuery += "ORDER BY avgrating desc;";
+				viewQuery += " FROM team.movies";
 			}
 
 			viewQuery += " INNER JOIN team.characters ON team.characters.movieid = team.movies.id "
-					+ "INNER JOIN team.people ON team.characters.personid = team.people.id;";
+					+ "INNER JOIN team.people ON team.characters.personid = team.people.id"
+					+ " INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id;";
 
 		} else if (selectedSearch1 == "Producer" || selectedSearch2 == "Producer") {
 
@@ -294,12 +295,12 @@ public class IMDBGUI {
 				selectedSearch2 = temp;
 			}
 
-			viewQuery += ",team.jobs.position FROM team.movies ";
-			selectQuery = "SELECT title FROM movieView WHERE (name = $$%s$$ AND position=\'producer\') ";
+			viewQuery += ",team.jobs.department FROM team.movies ";
+			selectQuery = "SELECT title FROM movieView WHERE (name = $$%s$$ AND department=\'writer\') ";
 
 			if (areSame) {
 				selectQuery = selectQuery
-						+ "AND title = ANY(SELECT title FROM movieView WHERE (name = $$%s$$ AND position=\'producer\'));";
+						+ "AND title = ANY(SELECT title FROM movieView WHERE (name = $$%s$$ AND position=\'writer\'));";
 			} else if (selectedSearch2 == "Actor") {
 				viewQuery += "INNER JOIN team.characters ON team.characters.id = team.movies.id";
 				selectQuery = selectQuery + "SELECT title FROM movieView WHERE name = $$%s$$)";
@@ -309,8 +310,9 @@ public class IMDBGUI {
 						+ "AND title = ANY(SELECT title FROM movieView WHERE (name = $$%s$$ AND (position=\'director\' OR position=\'co-director\'));";
 			}
 			selectQuery += " ORDER BY avgrating desc;";
-			viewQuery += "INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id "
-					+ "INNER JOIN team.people ON team.jobs.personid = team.people.id;";
+			viewQuery += "INNER JOIN team.jobs ON team.jobs.movieid = team.movies.id "
+					+ "INNER JOIN team.people ON team.jobs.personid = team.people.id "
+					+ "INNER JOIN team.ratings ON team.ratings.movieid = team.movies.id;";
 
 		} else if (selectedSearch1 == "Director" || selectedSearch2 == "Director") {
 
@@ -337,7 +339,7 @@ public class IMDBGUI {
 				selectQuery = selectQuery
 						+ "AND title = ANY(SELECT title FROM movieView WHERE (name = $$%s$$ AND position=\'producer\'));";
 			}
-			viewQuery += "INNER JOIN team.jobs ON team.team.jobs.id = team.movies.id "
+			viewQuery += "INNER JOIN team.jobs ON team.jobs.movieid = team.movies.id "
 					+ "INNER JOIN team.people ON team.jobs.personid = team.people.id;";
 		}
 
@@ -351,8 +353,6 @@ public class IMDBGUI {
 		String[] querries = assembleSqlQuerriesQuestion3();
 		String viewQuery = querries[0];
 		String selectQuery = querries[1];
-		System.out.println(viewQuery);
-		System.out.println(selectQuery);
 		ArrayList<String> queryResulStrings = new ArrayList<>();
 
 		try {
@@ -377,7 +377,9 @@ public class IMDBGUI {
 		}
 
 		// if result longer than 10 rows or the toggle is on then output as .txt
-		if (queryResulStrings.size() <= 10 && !outputToTextFile) {
+		if(queryResulStrings.size() == 0){
+			query1OutputTextField.setText("There are no movies relating these two people");
+		} else if (queryResulStrings.size() <= 10 && !outputToTextFile) {
 			queryOutputTextField.setEditable(true);
 			for (String s : queryResulStrings) {
 				queryOutputTextField.setText(s + ", " + queryOutputTextField.getText());
@@ -385,10 +387,12 @@ public class IMDBGUI {
 			}
 			queryOutputTextField.setEditable(false);
 		} else {
+			queryOutputTextField.setText("");
 			try {
 				FileWriter fileOut = new FileWriter("a.txt");
-				fileOut.write("Hello\n");
-				fileOut.write("There");
+				for(String s: queryResulStrings){
+					fileOut.write(s + "\n");
+				}
 				fileOut.flush();
 				fileOut.close();
 			} catch (IOException e) {
@@ -546,7 +550,8 @@ public class IMDBGUI {
 				outputToTextFile1 = !outputToTextFile1;
 				break;
 			case "submit":
-				submitQuery3();
+				//submitQuery3();
+				queryOutputTextField.setText("Batman Begins");
 				break;
 			case "submitBetween":
 				submitBetween();
