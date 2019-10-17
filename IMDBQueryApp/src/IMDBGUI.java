@@ -162,8 +162,8 @@ public class IMDBGUI {
 		JButton submitButton = new JButton("Submit Query");
 		submitButton.setActionCommand("submitBetween");// might need to change
 		submitButton.addActionListener(new ButtonClickListener());
-		toggleTextOutput.setActionCommand("toggleOutputFile");
-		toggleTextOutput.addActionListener(new ButtonClickListener());
+		//toggleTextOutput.setActionCommand("toggleOutputFile");
+		//toggleTextOutput.addActionListener(new ButtonClickListener());
 		startYear = new JTextField(20);
 		endYear = new JTextField(20);
 		betweenPanel.add(startYear);
@@ -476,9 +476,23 @@ public class IMDBGUI {
 		String sql2 = "";
 		ArrayList<String> queryResulStrings = new ArrayList<>();
 		ArrayList<String> removeYears = new ArrayList<>();
+		if(!outputToTextFile) {
+			queryOutputTextField.setEditable(true);
+			queryOutputTextField.setText("That guy, That movie he's from, another guy, a movie for the new guy");
+			queryOutputTextField.setEditable(false);
+		}else {
+			try {
+				FileWriter fileOut = new FileWriter("between.txt");
+				fileOut.write("That guy, his movie\nguy2, guy2's movie\n");
+				fileOut.write("guy the guy, the guy...uning");
+				fileOut.flush();
+				fileOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		// only for between 2 years
 		try {
-			stmt = conn.createStatement();
 			// Creates the view with the info
 			sql = String.format(
 					"CREATE TEMPORARY VIEW movieView AS SELECT title, team.people.name, year FROM team.movies WHERE year >= $$%s$$ AND year <= $$%s$$",
@@ -528,9 +542,22 @@ public class IMDBGUI {
 			// prevents unnecessary calls to database
 			sql = "";
 			sql2 = "";
+			queryOutputTextField.setEditable(true);
+			queryOutputTextField.setText("That guy, That movie he's from, another guy");
+			queryOutputTextField.setEditable(false);
+			if (queryResulStrings.size() <= 10 && !outputToTextFile) {
+				queryOutputTextField.setEditable(true);
+				for (String s : queryResulStrings) {
+					queryOutputTextField.setText(s + ", " + queryOutputTextField.getText());
+					System.out.println(s);
+				}
+				queryOutputTextField.setEditable(false);
+			}
+			
 		} catch (SQLException se) {
 			// Handle errors for JDBC
 			se.printStackTrace();
+			
 		}
 	}
 
