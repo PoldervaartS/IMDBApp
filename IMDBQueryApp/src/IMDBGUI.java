@@ -162,8 +162,8 @@ public class IMDBGUI {
 		JButton submitButton = new JButton("Submit Query");
 		submitButton.setActionCommand("submitBetween");// might need to change
 		submitButton.addActionListener(new ButtonClickListener());
-		//toggleTextOutput.setActionCommand("toggleOutputFile");
-		//toggleTextOutput.addActionListener(new ButtonClickListener());
+		// toggleTextOutput.setActionCommand("toggleOutputFile");
+		// toggleTextOutput.addActionListener(new ButtonClickListener());
 		startYear = new JTextField(20);
 		endYear = new JTextField(20);
 		betweenPanel.add(startYear);
@@ -377,7 +377,7 @@ public class IMDBGUI {
 		}
 
 		// if result longer than 10 rows or the toggle is on then output as .txt
-		if(queryResulStrings.size() == 0){
+		if (queryResulStrings.size() == 0) {
 			query1OutputTextField.setText("There are no movies relating these two people");
 		} else if (queryResulStrings.size() <= 10 && !outputToTextFile) {
 			queryOutputTextField.setEditable(true);
@@ -390,7 +390,7 @@ public class IMDBGUI {
 			queryOutputTextField.setText("");
 			try {
 				FileWriter fileOut = new FileWriter("a.txt");
-				for(String s: queryResulStrings){
+				for (String s : queryResulStrings) {
 					fileOut.write(s + "\n");
 				}
 				fileOut.flush();
@@ -403,6 +403,8 @@ public class IMDBGUI {
 	}
 
 	private void submitQuery2() {
+
+		System.out.println("Entry received for Question 1, Now finding movie titles....");
 
 		String actor1 = filterParameters1.getText();
 		String actor2 = filterParameters2.getText();
@@ -455,14 +457,62 @@ public class IMDBGUI {
 			se.printStackTrace();
 		}
 
+		ArrayList<String> titleact1 = new ArrayList<>();
+		ArrayList<String> titleact2 = new ArrayList<>();
+		String line = "";
+
+		for (int i = 0; i < movieidact1.size(); i++) {
+
+			try {
+
+				sql11 = String.format("SELECT title FROM team.movies WHERE id = $$%s$$;", movieidact1.get(0));
+
+				stmt = conn.createStatement();
+
+				PreparedStatement pst = conn.prepareStatement(sql11);
+				ResultSet rs = pst.executeQuery();
+				while (rs.next()) {
+					line = rs.getString(1);
+					if (!titleact1.contains(line)) {
+						titleact1.add(line);
+					}
+
+				}
+
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+
+		for (int i = 0; i < movieidact2.size(); i++) {
+
+			try {
+
+				sql22 = String.format("SELECT title FROM team.movies WHERE id = $$%s$$;", movieidact2.get(0));
+				stmt = conn.createStatement();
+
+				PreparedStatement pst = conn.prepareStatement(sql22);
+				ResultSet rs = pst.executeQuery();
+				while (rs.next()) {
+					line = rs.getString(1);
+					if (!titleact2.contains(line)) {
+						titleact2.add(line);
+					}
+				}
+
+			} catch (SQLException se) {
+				se.printStackTrace();
+			}
+		}
+
 		if (outputToTextFile1) {
 
 			try {
 
 				FileWriter myfile = new FileWriter("sandy.txt");
 				// myfile.write(movieidact1.get(i)+NL);
-				myfile.write(Arrays.toString(movieidact1.toArray()));
-				myfile.write(Arrays.toString(movieidact2.toArray()));
+				myfile.write(Arrays.toString(titleact1.toArray()) + NL + NL);
+				myfile.write(Arrays.toString(titleact2.toArray()));
 
 				myfile.flush();
 				myfile.close();
@@ -471,7 +521,9 @@ public class IMDBGUI {
 				se.printStackTrace();
 			}
 		}
-		query1OutputTextField.setText(Arrays.toString(movieidact1.toArray()) + Arrays.toString(movieidact2.toArray()));
+		System.out.println("Completed  Question 1, find file");
+		query1OutputTextField
+				.setText(Arrays.toString(titleact1.toArray()) + NL + NL + Arrays.toString(titleact2.toArray()));
 
 	}
 
@@ -480,11 +532,11 @@ public class IMDBGUI {
 		String sql2 = "";
 		ArrayList<String> queryResulStrings = new ArrayList<>();
 		ArrayList<String> removeYears = new ArrayList<>();
-		if(!outputToTextFile) {
+		if (!outputToTextFile) {
 			queryOutputTextField.setEditable(true);
 			queryOutputTextField.setText("That guy, That movie he's from, another guy, a movie for the new guy");
 			queryOutputTextField.setEditable(false);
-		}else {
+		} else {
 			try {
 				FileWriter fileOut = new FileWriter("between.txt");
 				fileOut.write("That guy, his movie\nguy2, guy2's movie\n");
@@ -494,7 +546,7 @@ public class IMDBGUI {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}
+		}/*
 		// only for between 2 years
 		try {
 			// Creates the view with the info
@@ -516,7 +568,7 @@ public class IMDBGUI {
 				String removeActor = rs.getString(1);
 				// adds actor to output
 
-				// get movie instead of name */
+				// get movie instead of name 
 				sql = String.format("SELECT title FROM movieView WHERE name = $$%s$$;", removeActor);
 				pst = conn.prepareStatement(sql);
 				rs = pst.executeQuery();
@@ -557,12 +609,12 @@ public class IMDBGUI {
 				}
 				queryOutputTextField.setEditable(false);
 			}
-			
+
 		} catch (SQLException se) {
 			// Handle errors for JDBC
 			se.printStackTrace();
-			
-		}
+
+		}*/
 	}
 
 	private class ButtonClickListener implements ActionListener {
